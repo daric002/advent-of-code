@@ -1,0 +1,15 @@
+.vs/
+
+*/bin
+*/obj
+
+[Oo]bj/
+[Bb]in/
+packages/
+
+#Files
+*csproj.user
+*.user
+*.patch
+
+*DotSettings.user
