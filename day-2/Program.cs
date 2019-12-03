@@ -64,20 +64,6 @@ namespace day_1
                 return fuel + CalculateFuelConsumption(fuel);
         }
 
-        //private static List<int> GetOpcodeRandom()
-        //{
-        //    var opcodes = new List<int>();
-        //    for (int i = 0; i < 100; i++)
-        //    {
-        //        opcodes[i + 1] = i;
-        //       ;
-        //    }
-        //    string line;
-        //    line = file.ReadToEnd();
-        //    opcodes = line.Split(',').Select(int.Parse).ToList();
-        //    return opcodes;
-        //}
-
         private static List<int> GetOpcodeFromFile()
         {
             var file = new System.IO.StreamReader("Input.txt");
