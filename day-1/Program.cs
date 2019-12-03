@@ -9,19 +9,28 @@ namespace day_1
         {
             var modules = GetModules();
 
-            var totalFuel = CalculateFuelConsumtion(modules);
+            var totalFuel = CalculateTotalFuelConsumtion(modules);
 
             Console.WriteLine(totalFuel);
         }
 
-        private static int CalculateFuelConsumtion(List<int> modules)
+        private static int CalculateTotalFuelConsumtion(List<int> modules)
         {
             var totaltFuel = 0;
             foreach (var module in modules)
             {
-                totaltFuel += Convert.ToInt32(Math.Floor((decimal)module / 3)) - 2;
+                totaltFuel += CalculateFuelConsumption(module);
             }
             return totaltFuel;
+        }
+
+        private static int CalculateFuelConsumption(int mass)
+        {
+            var fuel = Convert.ToInt32(Math.Floor((decimal)mass / 3)) - 2;
+            if (fuel <= 0)
+                return 0;
+            else
+                return fuel + CalculateFuelConsumption(fuel);
         }
 
         private static List<int> GetModules()
