@@ -20,11 +20,21 @@ namespace day_5
     }
     public class Program
     {
+        private static int input = 1;
+        private static List<int> instructions;
+
         public static void Main(string[] args)
         {
-            var result = TryInputs();
-            Console.WriteLine($"{result.Item1} {result.Item2}");
-            Console.WriteLine(100 * result.Item1 + result.Item2);
+            var result = Run();
+            Console.WriteLine($"{instructions[0]}");
+        }
+
+        private static int Run()
+        {
+            instructions = GetOpcodeFromFile();
+            RunProgram();
+
+            return 1;
         }
 
         private static Tuple<int, int> TryInputs()
@@ -35,82 +45,107 @@ namespace day_5
                 for (var j = 0; j < 100; j++)
                 {
                     var opcodes = GetOpcodeFromFile();
-                    opcodes[1] = i;
-                    opcodes[2] = j;
-                    var output = RunProgram(opcodes);
-                    if (output == 19690720)
-                        return new Tuple<int, int>(opcodes[1], opcodes[2]);
+                    RunProgram();
+                    //if ( == 19690720)
+                    //    return new Tuple<int, int>(opcodes[1], opcodes[2]);
                 }
             }
             return new Tuple<int, int>(-1, -1);
 
         }
 
-        private static int RunProgram(List<int> instructions)
+        private static void RunProgram()
         {
-
-            for (int i = 0; instructions[i] != 99; i += 4)
+            int i = 0;
+            while (i <= instructions.Count)
             {
-                var opCodeAsString = instructions[i].ToString();
-                int parameter1, parameter2, result;
-                Parametermode parametermode3;
-
+                var opCodeAsString = instructions[i].ToString("D5");
                 var opcode = (Operations)Enum.Parse(typeof(Operations), opCodeAsString.Substring(opCodeAsString.Length - 2));
                 switch (opcode)
                 {
                     case Operations.Add:
-                        GetParameters(opCodeAsString, instructions, i, out parameter1, out parameter2);
-                        parametermode3 = (Parametermode)Enum.Parse(typeof(Parametermode), opCodeAsString.Substring(opCodeAsString.Length - 5, 1));
-                        result = Addition(parameter1, parameter2);
 
-                        if (parametermode3 == Parametermode.Immediate)
-                        {
-                            instructions[i + 3] = result;
-                        }
-                        else
-                        {
-                            instructions[instructions[i + 3]] = result;
-                        }
+                        AddOperation(opCodeAsString, i);
+                        i += 4;
                         break;
                     case Operations.Multiply:
-                        GetParameters(opCodeAsString, instructions, i, out parameter1, out parameter2);
-                        parametermode3 = (Parametermode)Enum.Parse(typeof(Parametermode), opCodeAsString.Substring(opCodeAsString.Length - 5, 1));
-                        result = Multiply(parameter1, parameter2);
-
-                        if (parametermode3 == Parametermode.Immediate)
-                        {
-                            instructions[i + 3] = result;
-                        }
-                        else
-                        {
-                            instructions[instructions[i + 3]] = result;
-                        }
+                        MultiplyOperations(opCodeAsString, i);
+                        i += 4;
                         break;
                     case Operations.Save:
-                        var paramtermode1 = (Parametermode)Enum.Parse(typeof(Parametermode), opCodeAsString.Substring(opCodeAsString.Length - 3, 1));
-                        parameter1 = paramtermode1 == Parametermode.Immediate ? instructions[i + 1] : instructions[instructions[i + 1]];
-                        Save(parameter1);
+                        Save(opCodeAsString, i);
+                        i += 2;
                         break;
                     case Operations.Write:
-                        Write();
+                        Write(opCodeAsString, i);
+                        i += 2;
                         break;
                     case Operations.Exit:
-                        Exit();
+                        i = 1000000;
                         break;
-
+                    default:
+                        Console.WriteLine($"{i}: Wrong opcode");
+                        throw new Exception($"{i}: Wrong opcode");
                 }
-                //var result = opcode[i] == ADD ? , opcode[opcode[i + 2]]) : ;
-
             }
-
-            return instructions[0];
         }
 
-        private static void GetParameters(string opcodeAsString, List<int> instructions, int index, out int parameter1, out int parameter2)
+        private static void Write(string opcode, int i)
+        {
+            var parameter1 = GetParameter1(opcode, i);
+            Console.WriteLine($"{i}: {parameter1}");
+        }
+
+        private static void Save(string opcode, int i)
+        {
+            var parameter1 = GetParameter1(opcode, i);
+            instructions[instructions[parameter1]] = input;
+        }
+
+
+        private static void AddOperation(string opCode, int i)
+        {
+            GetParameters(opCode, i, out int parameter1, out int parameter2);
+            Parametermode parametermode3 = (Parametermode)Enum.Parse(typeof(Parametermode), opCode.Substring(opCode.Length - 5, 1));
+            var result = Addition(parameter1, parameter2);
+
+            if (parametermode3 == Parametermode.Immediate)
+            {
+                instructions[i + 3] = result;
+            }
+            else
+            {
+                instructions[instructions[i + 3]] = result;
+            }
+        }
+
+        private static void MultiplyOperations(string opCode, int i)
+        {
+            GetParameters(opCode, i, out int parameter1, out int parameter2);
+            var parametermode3 = (Parametermode)Enum.Parse(typeof(Parametermode), opCode.Substring(opCode.Length - 5, 1));
+            var result = Multiply(parameter1, parameter2);
+
+            if (parametermode3 == Parametermode.Immediate)
+            {
+                instructions[i + 3] = result;
+            }
+            else
+            {
+                instructions[instructions[i + 3]] = result;
+            }
+        }
+
+        private static int GetParameter1(string opcode, int i)
+        {
+            var paramtermode1 = (Parametermode)Enum.Parse(typeof(Parametermode), opcode.Substring(opcode.Length - 3, 1));
+            var parameter1 = paramtermode1 == Parametermode.Immediate ? instructions[i + 1] : instructions[instructions[i + 1]];
+            return parameter1;
+        }
+
+        private static void GetParameters(string opcodeAsString, int index, out int parameter1, out int parameter2)
         {
             var paramtermode1 = (Parametermode)Enum.Parse(typeof(Parametermode), opcodeAsString.Substring(opcodeAsString.Length - 3, 1));
             var paramtermode2 = (Parametermode)Enum.Parse(typeof(Parametermode), opcodeAsString.Substring(opcodeAsString.Length - 4, 1));
-
 
             parameter1 = paramtermode1 == Parametermode.Immediate ? instructions[index + 1] : instructions[instructions[index + 1]];
             parameter2 = paramtermode2 == Parametermode.Immediate ? instructions[index + 2] : instructions[instructions[index + 2]];
