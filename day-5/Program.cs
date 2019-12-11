@@ -25,16 +25,14 @@ namespace day_5
 
         public static void Main(string[] args)
         {
-            var result = Run();
+            Run();
             Console.WriteLine($"{instructions[0]}");
         }
 
-        private static int Run()
+        private static void Run()
         {
             instructions = GetOpcodeFromFile();
             RunProgram();
-
-            return 1;
         }
 
         private static Tuple<int, int> TryInputs()
@@ -64,7 +62,6 @@ namespace day_5
                 switch (opcode)
                 {
                     case Operations.Add:
-
                         AddOperation(opCodeAsString, i);
                         i += 4;
                         break;
@@ -93,13 +90,13 @@ namespace day_5
         private static void Write(string opcode, int i)
         {
             var parameter1 = GetParameter1(opcode, i);
-            Console.WriteLine($"{i}: {parameter1}");
+            Console.WriteLine($"{i}: {instructions[parameter1]}");
         }
 
         private static void Save(string opcode, int i)
         {
             var parameter1 = GetParameter1(opcode, i);
-            instructions[instructions[parameter1]] = input;
+            instructions[parameter1] = input;
         }
 
 
@@ -138,7 +135,8 @@ namespace day_5
         private static int GetParameter1(string opcode, int i)
         {
             var paramtermode1 = (Parametermode)Enum.Parse(typeof(Parametermode), opcode.Substring(opcode.Length - 3, 1));
-            var parameter1 = paramtermode1 == Parametermode.Immediate ? instructions[i + 1] : instructions[instructions[i + 1]];
+            //var parameter1 = paramtermode1 == Parametermode.Immediate ? instructions[i + 1] : instructions[instructions[i + 1]];
+            var parameter1 = instructions[i + 1];
             return parameter1;
         }
 
