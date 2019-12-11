@@ -10,6 +10,10 @@ namespace day_5
         Multiply = 2,
         Save = 3,
         Write = 4,
+        JumpIfTrue = 5,
+        JumpIfFalse = 6,
+        LessThan = 7,
+        Equals = 8,
         Exit = 99
     }
 
@@ -20,13 +24,13 @@ namespace day_5
     }
     public class Program
     {
-        private static int input = 1;
+        private static int input = 5;
         private static List<int> instructions;
 
         public static void Main(string[] args)
         {
             Run();
-            Console.WriteLine($"{instructions[0]}");
+            //Console.WriteLine($"{instructions[0]}");
         }
 
         private static void Run()
@@ -44,8 +48,6 @@ namespace day_5
                 {
                     var opcodes = GetOpcodeFromFile();
                     RunProgram();
-                    //if ( == 19690720)
-                    //    return new Tuple<int, int>(opcodes[1], opcodes[2]);
                 }
             }
             return new Tuple<int, int>(-1, -1);
@@ -80,6 +82,20 @@ namespace day_5
                     case Operations.Exit:
                         i = 1000000;
                         break;
+                    case Operations.JumpIfTrue:
+                        i = JumpIfTrueOperation(opCodeAsString, i);
+                        break;
+                    case Operations.JumpIfFalse:
+                        i = JumpIfFalseOperation(opCodeAsString, i);
+                        break;
+                    case Operations.LessThan:
+                        LessThanOperation(opCodeAsString, i);
+                        i += 4;
+                        break;
+                    case Operations.Equals:
+                        EqualsOperation(opCodeAsString, i);
+                        i += 4;
+                        break;
                     default:
                         Console.WriteLine($"{i}: Wrong opcode");
                         throw new Exception($"{i}: Wrong opcode");
@@ -87,10 +103,51 @@ namespace day_5
             }
         }
 
+        private static void EqualsOperation(string opCodeAsString, int i)
+        {
+            GetParameters(opCodeAsString, i, out int para1, out int para2);
+            var para3 = GetParameter3(opCodeAsString, i);
+
+            instructions[para3] = para1 == para2 ? 1 : 0;
+        }
+
+        private static void LessThanOperation(string opCodeAsString, int i)
+        {
+            GetParameters(opCodeAsString, i, out int para1, out int para2);
+            var para3 = GetParameter3(opCodeAsString, i);
+
+            instructions[para3] = para1 < para2 ? 1 : 0;
+        }
+
+        private static int JumpIfFalseOperation(string opCodeAsString, int i)
+        {
+            GetParameters(opCodeAsString, i, out int para1, out int para2);
+            if (para1 == 0)
+                return para2;
+            return i + 3;
+        }
+
+        private static int JumpIfTrueOperation(string opCodeAsString, int i)
+        {
+            GetParameters(opCodeAsString, i, out int para1, out int para2);
+            if (para1 != 0)
+                return para2;
+            return i + 3;
+        }
+
         private static void Write(string opcode, int i)
         {
             var parameter1 = GetParameter1(opcode, i);
-            Console.WriteLine($"{i}: {instructions[parameter1]}");
+            Parametermode parametermode3 = (Parametermode)Enum.Parse(typeof(Parametermode), opcode.Substring(opcode.Length - 3, 1));
+            if (parametermode3 == Parametermode.Immediate)
+            {
+                Console.WriteLine($"{i}: {parameter1}");
+            }
+            else
+            {
+                Console.WriteLine($"{i}: {instructions[parameter1]}");
+            }
+
         }
 
         private static void Save(string opcode, int i)
@@ -132,10 +189,14 @@ namespace day_5
             }
         }
 
+        private static int GetParameter3(string opcode, int i)
+        {
+            var parameter1 = instructions[i + 3];
+            return parameter1;
+        }
+
         private static int GetParameter1(string opcode, int i)
         {
-            var paramtermode1 = (Parametermode)Enum.Parse(typeof(Parametermode), opcode.Substring(opcode.Length - 3, 1));
-            //var parameter1 = paramtermode1 == Parametermode.Immediate ? instructions[i + 1] : instructions[instructions[i + 1]];
             var parameter1 = instructions[i + 1];
             return parameter1;
         }
