@@ -6,4 +6,10 @@
     <RootNamespace>day_6</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Update="Input.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
