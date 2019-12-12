@@ -9,30 +9,42 @@ namespace day_6
         {
             var orbitsList = GetOrbits();
             Dictionary<string, Orbit> orbitTree = GetOrbitTree(orbitsList);
+
             int orbitCountChecksum = GetNumberOfOrbits(orbitTree);
-            Console.WriteLine(orbitCountChecksum);
+            int orbitCountBetweenYouAndSanta = GetOrbitCountBetween("YOU", "SAN", orbitTree);
+
+            Console.WriteLine(orbitCountBetweenYouAndSanta);
         }
+
+        private static int GetOrbitCountBetween(string from, string to, Dictionary<string, Orbit> orbitTree)
+        {
+            var fromOrbit = orbitTree[from];
+            var toOrbit = orbitTree[to];
+
+            int intersectingOrbit = GetCommonOrbit(orbitTree, fromOrbit, toOrbit);
+            return intersectingOrbit;
+        }
+
+        private static int GetCommonOrbit(Dictionary<string, Orbit> orbitTree, Orbit fromOrbit, Orbit toOrbit)
+        {
+            var counter = new OrbitCounter(orbitTree);
+            var commonOrbit = counter.CommonOrbit(fromOrbit, toOrbit);
+
+            var numberfromToCommon = counter.CountOrbits(commonOrbit, orbitTree[fromOrbit.OrbitsAround]);
+
+            var numberToToCommon = counter.CountOrbits(commonOrbit, orbitTree[toOrbit.OrbitsAround]);
+
+            return numberfromToCommon + numberToToCommon;
+        }
+
+
 
         private static int GetNumberOfOrbits(Dictionary<string, Orbit> orbitTree)
         {
-            int numberOfOrbits = 0;
-            foreach (var orbitKeyValue in orbitTree)
-            {
-                numberOfOrbits += CountOrbits(orbitKeyValue.Value, orbitTree);
-            }
-
-
-            return numberOfOrbits;
-
+            var counter = new OrbitCounter(orbitTree);
+            return counter.GetNumberOfOrbitsTo("COM");
         }
 
-        private static int CountOrbits(Orbit orbit, Dictionary<string, Orbit> orbitTree)
-        {
-            if (orbit.OrbitsAround == null)
-                return 0;
-            return 1 + CountOrbits(orbitTree[orbit.OrbitsAround], orbitTree);
-
-        }
 
         private static Dictionary<string, Orbit> GetOrbitTree(List<Tuple<string, string>> orbitsList)
         {
