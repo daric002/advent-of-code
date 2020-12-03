@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 
 namespace intcode
 {
@@ -9,7 +10,7 @@ namespace intcode
             
         }
 
-        private static List<int> GetOpcodeFromFile()
+        public static List<int> GetOpcodeFromFile()
         {
             var file = new System.IO.StreamReader("Input.txt");
             var opcodes = new List<int>();

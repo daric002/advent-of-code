@@ -6,18 +6,34 @@ namespace intcode
 {
     public class Intcode
     {
-        public List<int> instructions {get;set;}
-        public void Run()
+        public Intcode(List<int> instructions, int phasesetting)
         {
-            RunProgram();
+            _instructions = instructions;
+            _phasesetting = phasesetting;
+            _phaseSettingIsUsed = false;
+            i=0;
+        }
+        private int _phasesetting;
+        private int i;
+        private bool _phaseSettingIsUsed;
+
+        private int _lastOutput;
+        private List<int> _instructions {get;set;}
+        // public void Run()
+        // {
+        //     RunProgram();
+        // }
+
+        public IntcodeResult RunWithInput(int input)
+        {
+            return RunProgram(input);
         }
 
-        private void RunProgram()
+        private IntcodeResult RunProgram(int input)
         {
-            int i = 0;
-            while (i <= instructions.Count)
+            while (i <= _instructions.Count)
             {
-                var opCodeAsString = instructions[i].ToString("D5");
+                var opCodeAsString = _instructions[i].ToString("D5");
                 var opcode = (Operations)Enum.Parse(typeof(Operations), opCodeAsString.Substring(opCodeAsString.Length - 2));
                 switch (opcode)
                 {
@@ -30,17 +46,23 @@ namespace intcode
                         i += 4;
                         break;
                     case Operations.Save:
-                        var input  = Convert.ToInt32(Console.ReadLine());
-                        Save(input, opCodeAsString, i);
+                        if(!_phaseSettingIsUsed){
+                            Save(_phasesetting, opCodeAsString, i);
+                            _phaseSettingIsUsed = true;
+                        }
+                        else 
+                        {
+                            Save(input, opCodeAsString, i);
+                        }
                         i += 2;
                         break;
                     case Operations.Write:
-                        Write(opCodeAsString, i);
                         i += 2;
-                        break;
+                        _lastOutput = Write(opCodeAsString, i);
+                        return new IntcodeResult(_lastOutput, false);
                     case Operations.Exit:
                         i = 1000000;
-                        break;
+                        return new IntcodeResult(_lastOutput, true);
                     case Operations.JumpIfTrue:
                         i = JumpIfTrueOperation(opCodeAsString, i);
                         break;
@@ -60,22 +82,23 @@ namespace intcode
                         throw new Exception($"{i}: Wrong opcode");
                 }
             }
+            throw new Exception($"Program was not exited in the right way. last output: {_lastOutput}, i: {i}");
         }
 
         private void EqualsOperation(string opCodeAsString, int i)
         {
             GetParameters(opCodeAsString, i, out int para1, out int para2);
-            var para3 = GetParameter3(opCodeAsString, i);
+            var para3 = GetParameter3(i);
 
-            instructions[para3] = para1 == para2 ? 1 : 0;
+            _instructions[para3] = para1 == para2 ? 1 : 0;
         }
 
         private void LessThanOperation(string opCodeAsString, int i)
         {
             GetParameters(opCodeAsString, i, out int para1, out int para2);
-            var para3 = GetParameter3(opCodeAsString, i);
+            var para3 = GetParameter3(i);
 
-            instructions[para3] = para1 < para2 ? 1 : 0;
+            _instructions[para3] = para1 < para2 ? 1 : 0;
         }
 
         private int JumpIfFalseOperation(string opCodeAsString, int i)
@@ -94,25 +117,26 @@ namespace intcode
             return i + 3;
         }
 
-        private void Write(string opcode, int i)
+        private int Write(string opcode, int i)
         {
-            var parameter1 = GetParameter1(opcode, i);
+            var parameter1 = GetParameter1(i);
             Parametermode parametermode3 = (Parametermode)Enum.Parse(typeof(Parametermode), opcode.Substring(opcode.Length - 3, 1));
             if (parametermode3 == Parametermode.Immediate)
             {
                 Console.WriteLine($"{i}: {parameter1}");
+                return parameter1;
             }
             else
             {
-                Console.WriteLine($"{i}: {instructions[parameter1]}");
+                return _instructions[parameter1];
             }
 
         }
 
         private void Save(int input, string opcode, int i)
         {
-            var parameter1 = GetParameter1(opcode, i);
-            instructions[parameter1] = input;
+            var parameter1 = GetParameter1(i);
+            _instructions[parameter1] = input;
         }
 
 
@@ -124,11 +148,11 @@ namespace intcode
 
             if (parametermode3 == Parametermode.Immediate)
             {
-                instructions[i + 3] = result;
+                _instructions[i + 3] = result;
             }
             else
             {
-                instructions[instructions[i + 3]] = result;
+                _instructions[_instructions[i + 3]] = result;
             }
         }
 
@@ -140,33 +164,41 @@ namespace intcode
 
             if (parametermode3 == Parametermode.Immediate)
             {
-                instructions[i + 3] = result;
+                _instructions[i + 3] = result;
             }
             else
             {
-                instructions[instructions[i + 3]] = result;
+                _instructions[_instructions[i + 3]] = result;
             }
         }
 
-        private int GetParameter3(string opcode, int i)
+        private int GetParameter3(int i)
         {
-            var parameter1 = instructions[i + 3];
+            var parameter1 = _instructions[i + 3];
             return parameter1;
         }
 
-        private int GetParameter1(string opcode, int i)
+        private int GetParameter2(int i)
         {
-            var parameter1 = instructions[i + 1];
+            var parameter1 = _instructions[i + 2];
             return parameter1;
         }
+
+        private int GetParameter1(int i)
+        {
+            var parameter1 = _instructions[i + 1];
+            return parameter1;
+        }
+
+        
 
         private void GetParameters(string opcodeAsString, int index, out int parameter1, out int parameter2)
         {
             var paramtermode1 = (Parametermode)Enum.Parse(typeof(Parametermode), opcodeAsString.Substring(opcodeAsString.Length - 3, 1));
             var paramtermode2 = (Parametermode)Enum.Parse(typeof(Parametermode), opcodeAsString.Substring(opcodeAsString.Length - 4, 1));
 
-            parameter1 = paramtermode1 == Parametermode.Immediate ? instructions[index + 1] : instructions[instructions[index + 1]];
-            parameter2 = paramtermode2 == Parametermode.Immediate ? instructions[index + 2] : instructions[instructions[index + 2]];
+            parameter1 = paramtermode1 == Parametermode.Immediate ? GetParameter1(index) : _instructions[GetParameter1(index)];
+            parameter2 = paramtermode2 == Parametermode.Immediate ? GetParameter2(index) : _instructions[GetParameter2(index)];
         }
 
         private int Multiply(int first, int second)
@@ -177,6 +209,20 @@ namespace intcode
         private int Addition(int first, int second)
         {
             return first + second;
+        }
+    }
+
+    public class IntcodeResult{
+        public IntcodeResult(int signal, bool exit)
+        {
+            Signal = signal;
+            Exit = exit;
+        }
+        public int Signal {get;set;}
+        public bool Exit {get;set;}
+
+        public override string ToString(){
+            return $"Signal: {Signal}, Exit:{Exit}";
         }
     }
 
